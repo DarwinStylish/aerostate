@@ -3,6 +3,7 @@ from math import isfinite
 
 from aerostate.core.state import AircraftConfiguration, AircraftState
 from aerostate.dynamics.forces import ForceBreakdown, compute_basic_forces
+from aerostate.dynamics.integrators import IntegratorName, integrate_step
 
 
 @dataclass(frozen=True)
@@ -35,19 +36,37 @@ def compute_acceleration(
     )
 
 
+def make_state_derivative(
+    config: AircraftConfiguration,
+    *,
+    throttle: float,
+) -> callable:
+    def derivative(state: AircraftState) -> AircraftState:
+        forces = compute_basic_forces(state, config, throttle=throttle)
+        acceleration = compute_acceleration(forces, config)
+        return AircraftState(
+            forward_position_m=state.forward_velocity_mps,
+            altitude_m=state.vertical_velocity_mps,
+            forward_velocity_mps=acceleration.forward_acceleration_mps2,
+            vertical_velocity_mps=acceleration.vertical_acceleration_mps2,
+            pitch_rad=state.pitch_rate_rad_s,
+            pitch_rate_rad_s=acceleration.pitch_acceleration_rad_s2,
+        )
+
+    return derivative
+
+
 def step_basic_motion(
     state: AircraftState,
     config: AircraftConfiguration,
     *,
     throttle: float,
     step_seconds: float,
+    integrator: IntegratorName | str = IntegratorName.EULER,
 ) -> AircraftState:
-    forces = compute_basic_forces(state, config, throttle=throttle)
-    acceleration = compute_acceleration(forces, config)
-
-    return state.with_motion_step(
-        forward_acceleration_mps2=acceleration.forward_acceleration_mps2,
-        vertical_acceleration_mps2=acceleration.vertical_acceleration_mps2,
-        pitch_acceleration_rad_s2=acceleration.pitch_acceleration_rad_s2,
-        step_seconds=step_seconds,
+    return integrate_step(
+        state,
+        make_state_derivative(config, throttle=throttle),
+        step_seconds,
+        integrator,
     )
