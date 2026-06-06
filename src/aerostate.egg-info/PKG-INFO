@@ -1,0 +1,32 @@
+Metadata-Version: 2.4
+Name: aerostate
+Version: 0.1.0
+Summary: 2D aerospace dynamics and control visualization platform.
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: numpy>=1.26
+Requires-Dist: pandas>=2.2
+Requires-Dist: matplotlib>=3.8
+Requires-Dist: plotly>=5.20
+Requires-Dist: streamlit>=1.35
+Provides-Extra: dev
+Requires-Dist: pytest>=8.0; extra == "dev"
+Requires-Dist: ruff>=0.4; extra == "dev"
+
+# AeroState
+
+AeroState is a 2D aerospace dynamics and control visualization platform for modeling aircraft motion, aerodynamic forces, numerical integration, PID altitude control, scenario simulation, safety monitoring, and engineering analysis.
+
+## Current scope
+
+This repository currently contains the project foundation for the simulation platform.
+
+## Development
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+pytest -q
+ruff check .
+```
