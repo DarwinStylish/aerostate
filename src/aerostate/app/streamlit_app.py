@@ -1,6 +1,7 @@
 import streamlit as st
 
 from aerostate.analysis.plots import save_engineering_plots
+from aerostate.analysis.trajectory import compute_trajectory_metrics
 from aerostate.scenarios.presets import ScenarioName, get_scenario
 from aerostate.simulation.runner import run_altitude_hold_scenario
 
@@ -38,6 +39,7 @@ def main() -> None:
             throttle=throttle,
         )
         frame = result.recorder.to_dataframe()
+        trajectory = compute_trajectory_metrics(frame)
 
         st.subheader("Final State")
         col1, col2, col3 = st.columns(3)
@@ -45,12 +47,22 @@ def main() -> None:
         col2.metric("Airspeed", f"{result.final_state.airspeed_mps:.1f} m/s")
         col3.metric("Pitch", f"{result.final_state.pitch_rad:.3f} rad")
 
+        st.subheader("Trajectory Summary")
+        t1, t2, t3 = st.columns(3)
+        t1.metric("Distance traveled", f"{trajectory.distance_traveled_m:.1f} m")
+        t2.metric("Max altitude", f"{trajectory.max_altitude_m:.1f} m")
+        t3.metric("Average airspeed", f"{trajectory.average_airspeed_mps:.1f} m/s")
+
         st.subheader("Flight Data")
         st.dataframe(frame.tail(25), use_container_width=True)
 
         st.subheader("Engineering Plots")
         output_dir = "results/plots/dashboard"
-        plots = save_engineering_plots(frame, output_dir)
+        plots = save_engineering_plots(
+            frame,
+            output_dir,
+            target_altitude_m=target_altitude,
+        )
         for name, path in plots.items():
             st.image(str(path), caption=name)
     else:

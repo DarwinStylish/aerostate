@@ -92,7 +92,49 @@ def save_control_error_plot(frame: pd.DataFrame, output_path: str | Path) -> Pat
     )
 
 
-def save_engineering_plots(frame: pd.DataFrame, output_dir: str | Path) -> dict[str, Path]:
+def save_flight_path_plot(
+    frame: pd.DataFrame,
+    output_path: str | Path,
+    *,
+    target_altitude_m: float | None = None,
+) -> Path:
+    require_columns(frame, ["forward_position_m", "altitude_m"])
+    target = Path(output_path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+
+    figure, axis = plt.subplots(figsize=(10, 5))
+    axis.plot(frame["forward_position_m"], frame["altitude_m"], label="flight path")
+    axis.scatter(
+        [frame["forward_position_m"].iloc[0]],
+        [frame["altitude_m"].iloc[0]],
+        marker="o",
+        label="start",
+    )
+    axis.scatter(
+        [frame["forward_position_m"].iloc[-1]],
+        [frame["altitude_m"].iloc[-1]],
+        marker="x",
+        label="end",
+    )
+    if target_altitude_m is not None:
+        axis.axhline(target_altitude_m, linestyle="--", label="target altitude")
+    axis.set_title("Flight Path")
+    axis.set_xlabel("Forward position (m)")
+    axis.set_ylabel("Altitude (m)")
+    axis.grid(True, alpha=0.3)
+    axis.legend()
+    figure.tight_layout()
+    figure.savefig(target, dpi=160)
+    plt.close(figure)
+    return target
+
+
+def save_engineering_plots(
+    frame: pd.DataFrame,
+    output_dir: str | Path,
+    *,
+    target_altitude_m: float | None = None,
+) -> dict[str, Path]:
     target = Path(output_dir)
     target.mkdir(parents=True, exist_ok=True)
     plots = {
@@ -100,6 +142,11 @@ def save_engineering_plots(frame: pd.DataFrame, output_dir: str | Path) -> dict[
         "velocity": save_velocity_plot(frame, target / "velocity_response.png"),
         "pitch": save_pitch_plot(frame, target / "pitch_response.png"),
         "forces": save_force_plot(frame, target / "force_response.png"),
+        "flight_path": save_flight_path_plot(
+            frame,
+            target / "flight_path.png",
+            target_altitude_m=target_altitude_m,
+        ),
     }
     if {"altitude_error_m", "pitch_command_rad"}.issubset(frame.columns):
         plots["control"] = save_control_error_plot(frame, target / "control_response.png")
