@@ -5,6 +5,7 @@ from aerostate.analysis.plots import (
     require_columns,
     save_altitude_plot,
     save_engineering_plots,
+    save_flight_path_plot,
 )
 
 
@@ -13,6 +14,7 @@ def sample_frame() -> pd.DataFrame:
         [
             {
                 "time_seconds": 0.0,
+                "forward_position_m": 0.0,
                 "altitude_m": 100.0,
                 "forward_velocity_mps": 30.0,
                 "vertical_velocity_mps": 0.0,
@@ -28,6 +30,7 @@ def sample_frame() -> pd.DataFrame:
             },
             {
                 "time_seconds": 1.0,
+                "forward_position_m": 35.0,
                 "altitude_m": 110.0,
                 "forward_velocity_mps": 31.0,
                 "vertical_velocity_mps": 1.0,
@@ -61,9 +64,20 @@ def test_save_altitude_plot_creates_png(tmp_path) -> None:
     assert output.suffix == ".png"
 
 
-def test_save_engineering_plots_creates_expected_outputs(tmp_path) -> None:
-    plots = save_engineering_plots(sample_frame(), tmp_path)
+def test_save_flight_path_plot_creates_png(tmp_path) -> None:
+    output = save_flight_path_plot(
+        sample_frame(),
+        tmp_path / "flight_path.png",
+        target_altitude_m=120.0,
+    )
 
-    assert set(plots) == {"altitude", "velocity", "pitch", "forces", "control"}
+    assert output.exists()
+    assert output.suffix == ".png"
+
+
+def test_save_engineering_plots_creates_expected_outputs(tmp_path) -> None:
+    plots = save_engineering_plots(sample_frame(), tmp_path, target_altitude_m=120.0)
+
+    assert set(plots) == {"altitude", "velocity", "pitch", "forces", "flight_path", "control"}
     for output in plots.values():
         assert output.exists()
