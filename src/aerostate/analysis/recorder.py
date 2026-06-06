@@ -26,6 +26,8 @@ class FlightSample:
     aerodynamic_z_n: float | None = None
     total_x_n: float | None = None
     total_z_n: float | None = None
+    altitude_error_m: float | None = None
+    pitch_command_rad: float | None = None
 
 
 @dataclass
@@ -40,6 +42,8 @@ class FlightRecorder:
         state: AircraftState,
         throttle: float | None = None,
         forces: ForceBreakdown | None = None,
+        altitude_error_m: float | None = None,
+        pitch_command_rad: float | None = None,
     ) -> None:
         state.validate()
         self.samples.append(
@@ -60,6 +64,8 @@ class FlightRecorder:
                 aerodynamic_z_n=forces.aerodynamic_z_n if forces else None,
                 total_x_n=forces.total_x_n if forces else None,
                 total_z_n=forces.total_z_n if forces else None,
+                altitude_error_m=altitude_error_m,
+                pitch_command_rad=pitch_command_rad,
             )
         )
 
